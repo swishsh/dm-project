@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+    nginx:
+        build:
+            context: .
+            dockerfile: docker/docker-files/Dockerfile-nginx
+        volumes:
+            - ./:/var/www/dm-project/
+            - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+            - ./docker/nginx/upstream.conf:/etc/nginx/conf.d/upstream.conf
+        ports:
+            - 8001:8080
+        networks:
+            - dm-project
+    php:
+        build:
+            context: .
+            dockerfile: docker/docker-files/Dockerfile-php
+        environment:
+            APP_ENV: dev
+        volumes:
+            - ./:/var/www/dm-project/
+        networks:
+            - dm-project
+    mysql:
+        build:
+            context: .
+            dockerfile: docker/mysql/Dockerfile
+        restart: on-failure
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: dm-project
+        volumes:
+            - database:/var/lib/mysql:rw
+            - ./docker/mysql/init/database.sql:/docker-entrypoint-initdb.d/init.sql:ro
+        ports:
+            - "${MYSQL_PORT:-3306}:3306"
+        networks:
+            - default
+
+volumes:
+    database:
+        driver: local
+networks:
+    dm-project:
