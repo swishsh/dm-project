@@ -37,7 +37,7 @@ services:
         ports:
             - "${MYSQL_PORT:-3306}:3306"
         networks:
-            - default
+            - dm-project
 
 volumes:
     database:
