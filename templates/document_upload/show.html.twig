@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}DocumentUpload{% endblock %}
+
+{% block body %}
+    <h1>DocumentUpload</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ document_upload.id }}</td>
+            </tr>
+            <tr>
+                <th>Name</th>
+                <td>{{ document_upload.name }}</td>
+            </tr>
+            <tr>
+                <th>Keyword</th>
+                <td>{{ document_upload.keyword }}</td>
+            </tr>
+            <tr>
+                <th>Path</th>
+                <td>{{ document_upload.path }}</td>
+            </tr>
+            <tr>
+                <th>Created</th>
+                <td>{{ document_upload.created ? document_upload.created|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+            <tr>
+                <th>Modified</th>
+                <td>{{ document_upload.modified ? document_upload.modified|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('document_upload_index') }}">back to list</a>
+
+    <a href="{{ path('document_upload_edit', {'id': document_upload.id}) }}">edit</a>
+
+    {{ include('document_upload/_delete_form.html.twig') }}
+{% endblock %}
