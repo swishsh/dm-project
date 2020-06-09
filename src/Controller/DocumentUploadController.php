@@ -6,15 +6,20 @@ use App\Entity\DocumentUpload;
 use App\Form\DocumentUploadType;
 use App\Repository\DocumentUploadRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 /**
  * @Route("/document/upload")
  */
 class DocumentUploadController extends AbstractController
 {
+    const UPLOAD_PATH = 'uploads';
+
     /**
      * @Route("/", name="document_upload_index", methods={"GET"})
      */
@@ -28,13 +33,28 @@ class DocumentUploadController extends AbstractController
     /**
      * @Route("/new", name="document_upload_new", methods={"GET","POST"})
      */
-    public function new(Request $request): Response
+    public function new(Request $request, SluggerInterface $slugger): Response
     {
         $documentUpload = new DocumentUpload();
         $form = $this->createForm(DocumentUploadType::class, $documentUpload);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            /** @var UploadedFile $pdfFile */
+            $pdfFile = $form->get('path')->getData();
+            if ($pdfFile) {
+                $originalFileName = pathinfo($pdfFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $savePath = static::UPLOAD_PATH.$slugger->slug($originalFileName).'-'.uniqid().''.$pdfFile->guessExtension();
+
+                try {
+                    $pdfFile->move($savePath);
+                    $documentUpload->setPath($savePath);
+                } catch (\Throwable $exception) {
+                    echo "Error uploading pdf! Please retry!";sleep (5);
+                    return $this->redirectToRoute('document_upload_index');
+                }
+            }
+
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($documentUpload);
             $entityManager->flush();
@@ -53,9 +73,23 @@ class DocumentUploadController extends AbstractController
      */
     public function show(DocumentUpload $documentUpload): Response
     {
-        return $this->render('document_upload/show.html.twig', [
-            'document_upload' => $documentUpload,
-        ]);
+        $response = new Response(
+            $this->render('document_upload/show.html.twig', [
+                'document_upload' => $documentUpload,
+            ])
+        );
+
+        $response->headers->set('Content-Disposition', 'inline');
+
+        return $response;
+    }
+
+    /**
+     * @Route("/pdf/{path}", name="show_pdf", methods={"GET"})
+     */
+    public function showPdf(string $path): Response
+    {
+        return new BinaryFileResponse('uploads/' . $path);
     }
 
     /**
