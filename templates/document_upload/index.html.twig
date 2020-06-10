@@ -1,31 +1,27 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}DocumentUpload index{% endblock %}
+{% block title %}DM Project{% endblock %}
 
 {% block body %}
     <h1>DocumentUpload index</h1>
 
+    <a href="{{ path('document_upload_new') }}">Adauga document</a>
+
     <table class="table">
         <thead>
             <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Keyword</th>
-                <th>Path</th>
-                <th>Created</th>
-                <th>Modified</th>
-                <th>actions</th>
+                <th>Nume</th>
+                <th>Cuvinte cheie</th>
+                <th>Pdf</th>
+                <th>Actiuni</th>
             </tr>
         </thead>
         <tbody>
         {% for document_upload in document_uploads %}
             <tr>
-                <td>{{ document_upload.id }}</td>
                 <td>{{ document_upload.name }}</td>
                 <td>{{ document_upload.keyword }}</td>
-                <td><iframe src="http://localhost:8001/document/upload/pdf/pdf-sample-5edfe4dc16f07pdf" width="100%" height="100%"></iframe></td>
-                <td>{{ document_upload.created ? document_upload.created|date('Y-m-d H:i:s') : '' }}</td>
-                <td>{{ document_upload.modified ? document_upload.modified|date('Y-m-d H:i:s') : '' }}</td>
+                <td><iframe src="{{ path('show_pdf', {'documentPath': document_upload.path})}}" width="100%" height="100%"></iframe></td>
                 <td>
                     <a href="{{ path('document_upload_show', {'id': document_upload.id}) }}">show</a>
                     <a href="{{ path('document_upload_edit', {'id': document_upload.id}) }}">edit</a>
@@ -38,6 +34,4 @@
         {% endfor %}
         </tbody>
     </table>
-
-    <a href="{{ path('document_upload_new') }}">Create new</a>
 {% endblock %}

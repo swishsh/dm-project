@@ -18,7 +18,7 @@ use Symfony\Component\String\Slugger\SluggerInterface;
  */
 class DocumentUploadController extends AbstractController
 {
-    const UPLOAD_PATH = 'uploads';
+    const UPLOAD_PATH = 'uploads/';
 
     /**
      * @Route("/", name="document_upload_index", methods={"GET"})
@@ -44,16 +44,22 @@ class DocumentUploadController extends AbstractController
             $pdfFile = $form->get('path')->getData();
             if ($pdfFile) {
                 $originalFileName = pathinfo($pdfFile->getClientOriginalName(), PATHINFO_FILENAME);
-                $savePath = static::UPLOAD_PATH.$slugger->slug($originalFileName).'-'.uniqid().''.$pdfFile->guessExtension();
+                $safeName = $slugger->slug($originalFileName).'-'.uniqid().''.$pdfFile->guessExtension();
 
                 try {
-                    $pdfFile->move($savePath);
-                    $documentUpload->setPath($savePath);
+                    $pdfFile->move(static::UPLOAD_PATH, $safeName);
+                    $documentUpload->setPath($safeName);
                 } catch (\Throwable $exception) {
                     echo "Error uploading pdf! Please retry!";sleep (5);
                     return $this->redirectToRoute('document_upload_index');
                 }
             }
+
+            if (null === $documentUpload->getCreated()) {
+                $documentUpload->setCreated(new \DateTime());
+            }
+
+            $documentUpload->setModified(new \DateTime());
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($documentUpload);
@@ -85,11 +91,11 @@ class DocumentUploadController extends AbstractController
     }
 
     /**
-     * @Route("/pdf/{path}", name="show_pdf", methods={"GET"})
+     * @Route("/pdf/{documentPath}", name="show_pdf", methods={"GET"})
      */
-    public function showPdf(string $path): Response
+    public function showPdf(string $documentPath): Response
     {
-        return new BinaryFileResponse('uploads/' . $path);
+        return new BinaryFileResponse(static::UPLOAD_PATH . $documentPath);
     }
 
     /**
